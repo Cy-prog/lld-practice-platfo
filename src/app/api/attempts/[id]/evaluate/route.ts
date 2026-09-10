@@ -44,8 +44,10 @@ export async function POST(
       // Optional body
     }
 
-    const { mode } = body;
-    const evaluation = await evaluationService.evaluateAttempt(params.id, mode);
+    const { mode, apiKey } = body;
+    const headerKey = req.headers.get("x-gemini-api-key");
+    const activeApiKey = apiKey || headerKey || undefined;
+    const evaluation = await evaluationService.evaluateAttempt(params.id, mode, activeApiKey);
 
     return NextResponse.json({
       success: true,

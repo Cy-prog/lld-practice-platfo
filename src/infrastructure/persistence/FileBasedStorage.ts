@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 
 export class FileBasedStorage<T extends { id: string }> {
   private filePath: string;
@@ -8,7 +9,16 @@ export class FileBasedStorage<T extends { id: string }> {
   private writeLock: Promise<void> = Promise.resolve();
 
   constructor(collectionName: string) {
-    const dataDir = path.resolve(process.cwd(), ".data");
+    // In serverless / read-only environments like Vercel or AWS Lambda, process.cwd() is read-only.
+    // Use os.tmpdir() when VERCEL is set so writes succeed without EROFS errors.
+    const isServerless = Boolean(
+      process.env.VERCEL ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.NETLIFY
+    );
+    const dataDir = isServerless
+      ? path.join(os.tmpdir(), ".lld_data")
+      : path.resolve(process.cwd(), ".data");
     this.filePath = path.join(dataDir, `${collectionName}.json`);
   }
 
@@ -27,10 +37,13 @@ export class FileBasedStorage<T extends { id: string }> {
     } catch (err: any) {
       if (err.code === "ENOENT") {
         this.memoryCache = new Map();
-        await this.flushToFile();
+        try {
+          await this.flushToFile();
+        } catch {
+          // Ignore
+        }
       } else {
-        // Corrupted file handling: start fresh cache but don't overwrite blindly
-        console.error(`Error reading ${this.filePath}:`, err);
+        // Corrupted file or read-only filesystem: start fresh in-memory cache
         this.memoryCache = new Map();
       }
     }
@@ -42,15 +55,20 @@ export class FileBasedStorage<T extends { id: string }> {
 
     // Chain file writes to prevent race conditions
     this.writeLock = this.writeLock.then(async () => {
-      const dataDir = path.dirname(this.filePath);
-      await fs.mkdir(dataDir, { recursive: true });
+      try {
+        const dataDir = path.dirname(this.filePath);
+        await fs.mkdir(dataDir, { recursive: true });
 
-      const items = Array.from(this.memoryCache!.values());
-      const tempPath = `${this.filePath}.${Date.now()}.tmp`;
-      const jsonContent = JSON.stringify(items, null, 2);
+        const items = Array.from(this.memoryCache!.values());
+        const tempPath = `${this.filePath}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
+        const jsonContent = JSON.stringify(items, null, 2);
 
-      await fs.writeFile(tempPath, jsonContent, "utf-8");
-      await fs.rename(tempPath, this.filePath);
+        await fs.writeFile(tempPath, jsonContent, "utf-8");
+        await fs.rename(tempPath, this.filePath);
+      } catch (err) {
+        // If filesystem write fails on serverless, log and retain data in memoryCache
+        console.warn(`Storage file write skipped for ${this.filePath}:`, err);
+      }
     });
 
     await this.writeLock;

@@ -176,9 +176,16 @@ export default function PracticeWorkspacePage() {
       setEvaluating(true);
 
       // 2. Trigger evaluation asynchronously
+      const savedApiKey = typeof window !== "undefined" ? localStorage.getItem("lld_gemini_api_key") : null;
+      const evalHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (savedApiKey) {
+        evalHeaders["x-gemini-api-key"] = savedApiKey;
+      }
+
       const evalRes = await fetch(`/api/attempts/${attemptId}/evaluate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: evalHeaders,
+        body: JSON.stringify(savedApiKey ? { apiKey: savedApiKey, mode: "gemini" } : {}),
       });
 
       const evalJson = await evalRes.json();
@@ -200,9 +207,16 @@ export default function PracticeWorkspacePage() {
   const handleRetryEvaluation = async () => {
     setEvaluating(true);
     try {
+      const savedApiKey = typeof window !== "undefined" ? localStorage.getItem("lld_gemini_api_key") : null;
+      const evalHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (savedApiKey) {
+        evalHeaders["x-gemini-api-key"] = savedApiKey;
+      }
+
       const evalRes = await fetch(`/api/attempts/${attemptId}/evaluate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: evalHeaders,
+        body: JSON.stringify(savedApiKey ? { apiKey: savedApiKey, mode: "gemini" } : {}),
       });
       const evalJson = await evalRes.json();
       if (evalJson.success) {

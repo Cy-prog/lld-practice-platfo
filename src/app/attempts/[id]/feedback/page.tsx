@@ -25,6 +25,7 @@ import { AttemptComparisonResult } from "@/domain/services/AttemptComparator";
 import CriterionCard from "@/components/feedback/CriterionCard";
 import ComparisonView from "@/components/feedback/ComparisonView";
 import { DifficultyBadge, ScorePill } from "@/components/common/Badges";
+import AiConfigModal from "@/components/common/AiConfigModal";
 
 export default function FeedbackPage() {
   const params = useParams();
@@ -38,6 +39,7 @@ export default function FeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
   const [showSubmissionSnapshot, setShowSubmissionSnapshot] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadFeedback() {
@@ -212,12 +214,22 @@ export default function FeedbackPage() {
 
         {/* Evaluator Mode Context Callout */}
         {evaluation.evaluatorType === "MOCK_DETERMINISTIC" ? (
-          <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-800/40 text-xs text-amber-200/90 flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-semibold text-amber-300">Offline Demo Mode: </span>
-              This evaluation was generated using the deterministic mock evaluator analyzing your actual submitted classes, responsibilities, and abstractions. To enable real LLM evaluation, add your <code className="bg-amber-900/40 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-200">GEMINI_API_KEY</code> in <code className="bg-amber-900/40 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-200">.env.local</code> and set <code className="bg-amber-900/40 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-200">EVALUATOR_MODE=gemini</code>.
+          <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-800/40 text-xs text-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-amber-300">Offline Demo Mode: </span>
+                This evaluation was generated using the deterministic mock evaluator analyzing your actual submitted classes. To enable live Google Gemini 2.5 Flash evaluation, configure your Gemini API Key.
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsAiModalOpen(true)}
+              className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-medium transition-colors flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Configure Gemini AI</span>
+            </button>
           </div>
         ) : (
           <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-xs text-emerald-200/90 flex items-center gap-2.5">
@@ -373,6 +385,11 @@ export default function FeedbackPage() {
           </button>
         </div>
       </div>
+
+      <AiConfigModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+      />
     </div>
   );
 }

@@ -79,7 +79,19 @@ export class ProblemService {
   }
 
   async getProblemById(id: string): Promise<Problem | null> {
-    await this.initializeSeedDataIfEmpty();
-    return this.problemRepo.findById(id);
+    if (!id) return null;
+    try {
+      await this.initializeSeedDataIfEmpty();
+    } catch {
+      // Continue even if file seed initialization fails on serverless
+    }
+    const rawId = id.trim().toLowerCase();
+    const normalized = rawId.replace(/[\s_]+/g, "-");
+    const found = await this.problemRepo.findById(rawId);
+    if (found) return found;
+    if (normalized !== rawId) {
+      return this.problemRepo.findById(normalized);
+    }
+    return null;
   }
 }

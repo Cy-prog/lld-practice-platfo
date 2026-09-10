@@ -7,28 +7,85 @@ import {
   IEvaluationRepository,
 } from "./interfaces";
 import { FileBasedStorage } from "./FileBasedStorage";
+import { SEED_PROBLEMS } from "../seed/seedProblems";
 
 export class ProblemRepository implements IProblemRepository {
   private storage: FileBasedStorage<Problem>;
+  private static inMemorySeed: Map<string, Problem> = new Map(
+    SEED_PROBLEMS.map((p) => [p.id, p])
+  );
 
   constructor(storage?: FileBasedStorage<Problem>) {
     this.storage = storage || new FileBasedStorage<Problem>("problems");
   }
 
   async findAll(): Promise<Problem[]> {
-    return this.storage.getAll();
+    try {
+      const stored = await this.storage.getAll();
+      if (stored && stored.length > 0) {
+        const merged = new Map(ProblemRepository.inMemorySeed);
+        for (const item of stored) {
+          merged.set(item.id, item);
+        }
+        return Array.from(merged.values());
+      }
+    } catch {
+      // Storage fallback
+    }
+    return Array.from(ProblemRepository.inMemorySeed.values());
   }
 
   async findById(id: string): Promise<Problem | null> {
-    return this.storage.getById(id);
+    if (!id) return null;
+    const rawId = id.trim().toLowerCase();
+    const normalized = rawId.replace(/[\s_]+/g, "-");
+
+    // 1. Check in-memory seed first (instant & guarantees 100% availability)
+    if (ProblemRepository.inMemorySeed.has(rawId)) {
+      return ProblemRepository.inMemorySeed.get(rawId)!;
+    }
+    if (ProblemRepository.inMemorySeed.has(normalized)) {
+      return ProblemRepository.inMemorySeed.get(normalized)!;
+    }
+
+    // 2. Check storage
+    try {
+      const item =
+        (await this.storage.getById(rawId)) ||
+        (normalized !== rawId ? await this.storage.getById(normalized) : null);
+      if (item) return item;
+    } catch {
+      // Storage fallback
+    }
+
+    // 3. Fallback fuzzy search by key match
+    for (const [key, prob] of ProblemRepository.inMemorySeed) {
+      if (key.includes(normalized) || normalized.includes(key)) {
+        return prob;
+      }
+    }
+
+    return null;
   }
 
   async save(problem: Problem): Promise<void> {
-    await this.storage.save(problem);
+    ProblemRepository.inMemorySeed.set(problem.id, problem);
+    try {
+      await this.storage.save(problem);
+    } catch {
+      // Ignore file error in read-only environment
+    }
   }
 
   async saveMany(problems: Problem[]): Promise<void> {
-    await this.storage.saveMany(problems);
+    for (const p of problems) {
+      ProblemRepository.inMemorySeed.set(p.id, p);
+    }
+    try {
+      await this.storage.saveMany(problems);
+    } catch {
+      // Ignore file error in read-only environment
+    }
   }
 }
 

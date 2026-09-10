@@ -18,7 +18,8 @@ export class EvaluationService {
 
   async evaluateAttempt(
     attemptId: string,
-    evaluatorModeOverride?: "gemini" | "mock"
+    evaluatorModeOverride?: "gemini" | "mock",
+    apiKeyOverride?: string
   ): Promise<Evaluation> {
     const attempt = await this.attemptRepo.findById(attemptId);
     if (!attempt) {
@@ -56,7 +57,7 @@ export class EvaluationService {
       throw new DomainError(`Problem '${attempt.problemId}' not found.`);
     }
 
-    const evaluator = EvaluatorFactory.createEvaluator(evaluatorModeOverride);
+    const evaluator = EvaluatorFactory.createEvaluator(evaluatorModeOverride, apiKeyOverride);
 
     try {
       const evaluation = await evaluator.evaluate({

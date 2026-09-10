@@ -21,7 +21,8 @@ import { Problem } from "@/domain/models/Problem";
 export default function ProblemDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const problemId = params.id as string;
+  const rawId = (params.id as string) || "";
+  const problemId = decodeURIComponent(rawId).trim().toLowerCase().replace(/[\s_]+/g, "-");
 
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
