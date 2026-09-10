@@ -1,0 +1,227 @@
+import { Problem } from "../../domain/models/Problem";
+
+export const SEED_PROBLEMS: Problem[] = [
+  {
+    id: "parking-lot",
+    title: "Parking Lot System",
+    shortDescription: "Design a multi-level automated parking lot handling various vehicle types, spot allocations, and dynamic ticketing.",
+    difficulty: "INTERMEDIATE",
+    estimatedTimeMinutes: 45,
+    statement:
+      "Design an automated multi-level parking lot system for a commercial venue. The system must allocate spots efficiently to different vehicle types, issue tickets upon entry, calculate parking fees upon exit, and support multiple entry/exit gates without race conditions.",
+    functionalRequirements: [
+      "Support multiple vehicle types: Motorcycle, Compact Car, Large SUV/Truck, and Electric Vehicle.",
+      "Manage multiple parking levels, each with designated spot types matching vehicle dimensions (Compact, Regular, Large, EV charging).",
+      "Assign an optimal available spot upon entry based on vehicle size and a configurable allocation strategy (e.g. Nearest-to-entrance, Best-fit).",
+      "Issue a unique parking ticket with vehicle details, entry timestamp, and allocated spot ID.",
+      "Calculate parking fees at exit based on duration, spot type, vehicle type, and dynamic pricing rules (e.g. peak hours, flat-rate first hour).",
+      "Process payments through cash, credit card, or digital UPI, and open the exit barrier only upon successful payment verification.",
+      "Display real-time availability boards per floor and vehicle category at entry gates.",
+    ],
+    businessRules: [
+      "A vehicle can only park in a spot that accommodates its size (Motorcycles can fit anywhere, but cars cannot fit in motorcycle spots).",
+      "Spots cannot be double-booked; concurrent entries at separate gates must not receive the same spot.",
+      "Lost tickets incur a maximum flat-rate penalty fee.",
+      "EV spots should prioritize electric vehicles, but may fall back to standard vehicles if regular spots are exhausted.",
+    ],
+    constraints: [
+      "The parking lot operates 24/7 with up to 10 gates and 5,000 spots.",
+      "Spot allocation and ticket generation must execute with sub-second latency.",
+      "State transitions for spots (Available, Reserved, Occupied, Maintenance) must be strictly maintained.",
+    ],
+    assumptions: [
+      "Gate hardware (license plate scanners, barrier arms) communicate via software drivers/adapters.",
+      "Vehicles are driven by humans or automated shuttles obeying gate signage.",
+      "Currency is single-denomination (USD) for MVP calculations.",
+    ],
+    expectedDesignAreas: [
+      "Vehicle and Spot class hierarchies (polymorphism vs composition)",
+      "Spot allocation strategy (Strategy pattern for Nearest vs Floor-by-floor)",
+      "Pricing calculation (Strategy pattern for dynamic/hourly tariffs)",
+      "Ticket and Payment lifecycle management",
+      "Concurrency and thread safety considerations for spot booking",
+    ],
+    hints: [
+      "Separate the concept of a Vehicle from the Spot it occupies.",
+      "Avoid putting fee calculation logic inside the ParkingLot class itself; consider a FeeCalculationStrategy.",
+      "Consider how an entry gate queries available spots without scanning the entire lot iteratively.",
+    ],
+    tags: ["Strategy Pattern", "State Pattern", "Concurrency", "Factory Pattern"],
+  },
+  {
+    id: "vending-machine",
+    title: "Vending Machine System",
+    shortDescription: "Design a stateful vending machine handling coin/cash validation, inventory dispensing, change calculation, and cancellation.",
+    difficulty: "BEGINNER",
+    estimatedTimeMinutes: 35,
+    statement:
+      "Design an automated vending machine system that dispenses snacks and beverages. The system must guide the customer through selecting items, accepting money, validating funds, dispensing products, and computing optimal change while gracefully handling edge cases like insufficient stock or machine cancellation.",
+    functionalRequirements: [
+      "Allow users to select an item from a keypad code (e.g. A1, B3) and display price and inventory status.",
+      "Accept payment in various denominations (Coins: 1c, 5c, 10c, 25c; Cash: $1, $5).",
+      "Maintain a running balance of deposited money.",
+      "Dispense item when deposited balance meets or exceeds the item price.",
+      "Calculate and dispense optimal change using available coin/note inventory.",
+      "Allow user to cancel transaction prior to dispensing and receive a 100% refund of deposited funds.",
+      "Allow maintenance technician to restock items and replenish change reserves.",
+    ],
+    businessRules: [
+      "The machine cannot dispense an item if current inventory is 0 (Sold Out).",
+      "If the machine cannot provide exact change, it must refund the inserted money and abort the transaction or warn the user beforehand.",
+      "Once an item begins dispensing, transaction cancellation is disabled.",
+      "Prices are fixed per inventory slot, not necessarily per product type.",
+    ],
+    constraints: [
+      "The machine has a physical capacity of 30 product slots and 100 units of each coin denomination.",
+      "State transitions must be deterministic: Idle -> HasMoney -> Dispensing -> Refund/Change -> Idle.",
+    ],
+    assumptions: [
+      "Coin and cash validators are physical peripherals represented via software interfaces.",
+      "Only one customer interacts with the machine at a time (single-threaded interaction model).",
+    ],
+    expectedDesignAreas: [
+      "State Machine Pattern (IdleState, HasMoneyState, DispensingState, SoldOutState)",
+      "Inventory management and slot organization",
+      "Greedy change-making algorithm and inventory tracking for coins",
+      "Transaction rollback on mechanical failure",
+    ],
+    hints: [
+      "The State pattern avoids massive if/else chains for commands like insertMoney(), selectItem(), cancel(), and dispense().",
+      "Model coin denominations as an Enum or Value Object with integer cents to prevent floating-point errors.",
+    ],
+    tags: ["State Pattern", "Inventory", "Value Objects"],
+  },
+  {
+    id: "elevator-system",
+    title: "Elevator System",
+    shortDescription: "Design a multi-car elevator control system optimizing car dispatching, floor scheduling, and passenger safety.",
+    difficulty: "ADVANCED",
+    estimatedTimeMinutes: 60,
+    statement:
+      "Design an elevator control system for a high-rise commercial skyscraper with multiple elevator cars. The system must coordinate passenger dispatching from floor hallway buttons (external requests) and car internal panels, optimizing wait times, floor traversal direction, and load capacity.",
+    functionalRequirements: [
+      "Support multiple elevator cars operating concurrently across N floors.",
+      "Accept external hallway requests (source floor, desired direction: UP or DOWN).",
+      "Accept internal car panel requests (destination floor selected by passenger inside the car).",
+      "Dispatch the most suitable elevator car to service external hall calls based on proximity, current direction, and queue length.",
+      "Control car door operations (OPEN, CLOSING, CLOSED) with safety sensor overrides.",
+      "Monitor car weight sensor and prevent door closure if weight exceeds maximum capacity limit.",
+      "Support emergency stop and fire recall mode (dispatch all cars immediately to ground floor).",
+    ],
+    businessRules: [
+      "An elevator moving UP should service all UP requests on floors ahead before reversing direction to service DOWN requests (SCAN/LOOK algorithm).",
+      "If a car is at maximum capacity, it must bypass external hallway calls until passengers disembark.",
+      "Doors must not open while the car is moving between floors.",
+      "Idle cars should park at high-traffic lobby floors during morning peak periods if configured.",
+    ],
+    constraints: [
+      "Skyscraper has up to 50 floors and 8 coordinated elevator cars.",
+      "System must process real-time floor sensor triggers and dispatch decisions efficiently.",
+    ],
+    assumptions: [
+      "Physical motors and door sensors send event interrupts to the controller.",
+      "Floor travel time between adjacent levels is a constant average for scheduling simulation.",
+    ],
+    expectedDesignAreas: [
+      "Elevator Car and Elevator Controller separation",
+      "Dispatch algorithm (Strategy pattern for LOOK, SCAN, or Proximity scheduling)",
+      "Internal vs External Request modeling",
+      "Door and Motion state management",
+      "Observer pattern for floor arrival notifications",
+    ],
+    hints: [
+      "Decouple the individual Elevator Car state from the Central Dispatcher/Manager.",
+      "Consider using two priority queues (or a Tree-Set) per car: one for the current direction and one for the reverse direction.",
+    ],
+    tags: ["Scheduling Algorithms", "Observer Pattern", "Strategy Pattern", "Concurrency"],
+  },
+  {
+    id: "library-management",
+    title: "Library Management System",
+    shortDescription: "Design a comprehensive library system managing book cataloging, member accounts, lending, reservation queues, and fine calculations.",
+    difficulty: "INTERMEDIATE",
+    estimatedTimeMinutes: 45,
+    statement:
+      "Design a software system for a public or university library. The system must manage a diverse catalog of books, multiple physical copies per title, member borrowing quotas, book reservation waitlists, and automated overdue fine calculations.",
+    functionalRequirements: [
+      "Search catalog by title, author, subject, or ISBN with flexible search criteria.",
+      "Distinguish between a conceptual Book (metadata, authors, ISBN) and physical BookItems/Copies (barcode, rack location, condition).",
+      "Manage member accounts with distinct roles (Student, Faculty, Librarian, Guest) and differing borrowing limits.",
+      "Check out physical book items to members up to their role-specific quota for a standard loan period.",
+      "Renew loans if no active reservation exists from another member.",
+      "Reserve a book title when all physical copies are currently loaned out, maintaining a FIFO waitlist.",
+      "Calculate overdue fines upon return based on days delayed and member tier.",
+      "Send reminder notifications for approaching due dates and available reservations.",
+    ],
+    businessRules: [
+      "A member cannot check out additional books if they have unpaid fines exceeding the threshold.",
+      "Reference-only books cannot be loaned out (in-library use only).",
+      "Reserved books are held at the front desk for 48 hours before notifying the next person in queue.",
+      "Faculty members receive longer loan durations and zero overdue fines.",
+    ],
+    constraints: [
+      "Library catalog contains over 200,000 titles and 50,000 active members.",
+      "Concurrent checkout requests for the same book copy must be handled atomically.",
+    ],
+    assumptions: [
+      "Barcode/RFID scanners interact via client APIs.",
+      "Notification delivery (Email/SMS) is delegated to an external messaging gateway.",
+    ],
+    expectedDesignAreas: [
+      "Catalog indexing and Search Strategy pattern",
+      "Book vs BookItem separation (Flyweight or Entity relationship)",
+      "User hierarchy with role-based policies",
+      "Loan and Reservation lifecycle state management",
+      "Fine calculation strategy based on membership tier",
+    ],
+    hints: [
+      "Remember that a patron borrows a specific BookItem (physical copy with barcode), but reserves a Book (the title).",
+      "Use Strategy pattern for OverdueFineCalculation and SearchStrategy.",
+    ],
+    tags: ["Cataloging", "Role-Based Access", "Strategy Pattern", "State Machine"],
+  },
+  {
+    id: "splitwise-expense",
+    title: "Splitwise / Expense Sharing",
+    shortDescription: "Design an expense sharing and debt minimization system supporting multi-user groups, flexible splits, and balance settlements.",
+    difficulty: "INTERMEDIATE",
+    estimatedTimeMinutes: 50,
+    statement:
+      "Design an expense-sharing application similar to Splitwise. The platform enables individuals and groups to record shared expenses, allocate shares using multiple division algorithms (equal, exact amounts, percentages, shares), and simplify collective debts across participants to minimize total settlement transactions.",
+    functionalRequirements: [
+      "Create and manage user profiles and user groups (e.g., Roommates, Road Trip).",
+      "Record expenses paid by one or multiple users on behalf of several participants.",
+      "Support multiple split strategies: Equal split, Exact currency amounts, Percentage split, and Fractional shares.",
+      "Validate that total split allocations strictly sum to the total expense amount.",
+      "Maintain a real-time ledger of who owes whom within groups and across non-group individual interactions.",
+      "Settle balances between two users with cash or digital payment logs.",
+      "Debt Simplification: Algorithm to simplify reciprocal debts across group members (e.g. if A owes B $10 and B owes C $10, simplify to A owes C $10).",
+    ],
+    businessRules: [
+      "Percentage splits must sum to exactly 100.0%.",
+      "Exact splits must sum to the total bill amount down to the exact cent.",
+      "A user cannot be removed from a group if they have an unsettled non-zero balance.",
+      "Expenses cannot be logged with negative or zero amounts.",
+    ],
+    constraints: [
+      "Support groups with up to 50 members and thousands of historical transactions.",
+      "Debt simplification must run in reasonable time (e.g. greedy heap algorithm: O(N log N)).",
+    ],
+    assumptions: [
+      "All expenses within a group share a common base currency for MVP.",
+      "Actual banking settlement transfers happen off-platform; Splitwise records the settlement acknowledgement.",
+    ],
+    expectedDesignAreas: [
+      "Split Strategy hierarchy (Strategy pattern for EqualSplit, ExactSplit, PercentSplit)",
+      "Expense and Balance Sheet domain modeling",
+      "Directed graph representation of debts and min-cash-flow simplification algorithm",
+      "Audit trail / Activity log for expense mutations",
+    ],
+    hints: [
+      "Model each Split as a separate entity containing the debtor and their share amount.",
+      "Use a Strategy pattern for SplitCalculation to easily support new split variations without modifying Expense.",
+      "To simplify debts, calculate the net balance for each user, separate into net creditors and debtors, and greedily match largest creditor with largest debtor.",
+    ],
+    tags: ["Strategy Pattern", "Graph Algorithms", "Ledger Modeling", "Debt Simplification"],
+  },
+];
