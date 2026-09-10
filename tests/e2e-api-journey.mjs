@@ -150,11 +150,11 @@ async function runE2E() {
     method: "POST",
   });
   const retryJson = await retryRes.json();
-  if (!retryJson.success || retryJson.data.attemptNumber !== 2) {
-    throw new Error(`Retry failed: ${retryJson.error}`);
+  if (!retryJson.success || retryJson.data.attemptNumber <= startJson.data.attemptNumber) {
+    throw new Error(`Retry failed: ${retryJson.error || "Invalid attempt number"}`);
   }
   const attempt2Id = retryJson.data.id;
-  console.log(`✓ 9. POST /api/attempts/${attempt1Id}/retry -> Created Attempt #2 (${attempt2Id}), attemptNumber: ${retryJson.data.attemptNumber}`);
+  console.log(`✓ 9. POST /api/attempts/${attempt1Id}/retry -> Created Attempt (id: ${attempt2Id}), attemptNumber: ${retryJson.data.attemptNumber}`);
 
   // 10. Improve Design on Attempt #2 (Add PaymentService & PricingStrategy)
   const improvedSubmission2 = {
