@@ -22,9 +22,18 @@ export class MockEvaluator implements IEvaluator {
     const godClassCandidate = (content.classes || []).find((c) => {
       const resp = c.responsibility.toLowerCase();
       const name = c.name.toLowerCase();
+      const methodCount = (c.methods || []).length;
+
+      const hasGodClassNaming =
+        name.includes("system") || name.includes("manager") || name.includes("controller");
+      const hasTooManyMethods = methodCount >= 6;
+      const isSoleMonolith = (content.classes || []).length === 1 && methodCount >= 4;
+      const hasMultipleCommas = (resp.match(/,/g) || []).length >= 3;
+
       return (
-        (resp.includes("and") && resp.length > 50) ||
-        (name.includes("system") || name.includes("manager")) && (c.methods || []).length > 5
+        (hasGodClassNaming && hasTooManyMethods) ||
+        (hasTooManyMethods && hasMultipleCommas) ||
+        isSoleMonolith
       );
     });
 

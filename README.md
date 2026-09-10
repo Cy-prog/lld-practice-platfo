@@ -94,12 +94,15 @@ cp .env.example .env.local
 Create a `.env.local` file in the project root:
 
 ```env
-# Evaluator Mode: 'mock' (default, offline deterministic demo) or 'gemini' (uses Google Gemini API)
+# Evaluator Mode: 'gemini' (uses Google Gemini API) or 'mock' (default, offline deterministic demo)
 EVALUATOR_MODE=mock
 
 # Google Gemini API Key (required if EVALUATOR_MODE=gemini)
 # Get a key at: https://aistudio.google.com/
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# Optional: Gemini model override (defaults to gemini-2.5-flash)
+GEMINI_MODEL=gemini-2.5-flash
 
 # Server Port
 PORT=3000
@@ -109,7 +112,7 @@ PORT=3000
 
 ---
 
-## 6. Running the Application
+## 6. Running the Application & Test Suites
 
 ### Development Server
 ```bash
@@ -123,9 +126,19 @@ npm run build
 npm run start
 ```
 
-### Running Automated Tests
+### Running Unit & Semantic Tests (25 tests across 6 suites)
 ```bash
 npm test
+```
+
+### Running Complete End-to-End Journey Verification
+```bash
+npm run test:e2e
+```
+
+### Running Code Quality / ESLint Checks
+```bash
+npm run lint
 ```
 
 ---

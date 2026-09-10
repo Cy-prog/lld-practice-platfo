@@ -158,13 +158,21 @@ export default function FeedbackPage() {
       <div className="p-8 rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-blue-950/20 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
                 Rubric-Based Design Evaluation
               </span>
-              <span className="text-[11px] font-mono text-blue-400 bg-blue-950/60 border border-blue-800/60 px-2 py-0.5 rounded">
-                Evaluator: {evaluation.evaluatorType}
-              </span>
+              {evaluation.evaluatorType === "AI_GEMINI" ? (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 bg-emerald-950/70 border border-emerald-700/60 px-2.5 py-0.5 rounded-full shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Real AI Evaluation (Gemini 2.5 Flash)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-amber-300 bg-amber-950/70 border border-amber-700/60 px-2.5 py-0.5 rounded-full shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  Demo Evaluation (Deterministic Mock)
+                </span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
               {problem?.title || "Design Evaluation"}
@@ -201,6 +209,25 @@ export default function FeedbackPage() {
         <div className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 text-sm text-slate-300 leading-relaxed">
           {evaluation.summary}
         </div>
+
+        {/* Evaluator Mode Context Callout */}
+        {evaluation.evaluatorType === "MOCK_DETERMINISTIC" ? (
+          <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-800/40 text-xs text-amber-200/90 flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-amber-300">Offline Demo Mode: </span>
+              This evaluation was generated using the deterministic mock evaluator analyzing your actual submitted classes, responsibilities, and abstractions. To enable real LLM evaluation, add your <code className="bg-amber-900/40 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-200">GEMINI_API_KEY</code> in <code className="bg-amber-900/40 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-200">.env.local</code> and set <code className="bg-amber-900/40 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-200">EVALUATOR_MODE=gemini</code>.
+            </div>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-xs text-emerald-200/90 flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div>
+              <span className="font-semibold text-emerald-300">Live Gemini Evaluation: </span>
+              Your submitted architecture was sent directly to Google Gemini AI and assessed across the 8-dimension rubric.
+            </div>
+          </div>
+        )}
 
         {/* Next Practice Focus Banner */}
         <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/30 border border-blue-800/50 flex items-start gap-3">
@@ -291,7 +318,7 @@ export default function FeedbackPage() {
           {showSubmissionSnapshot && (
             <div className="p-5 border-t border-slate-800 bg-slate-950/80 text-xs font-mono text-slate-300 max-h-96 overflow-y-auto space-y-4">
               <div>
-                <span className="text-blue-400 font-bold block mb-1">// Classes Modeled:</span>
+                <span className="text-blue-400 font-bold block mb-1">{"// Classes Modeled:"}</span>
                 <pre className="text-[11px] whitespace-pre-wrap text-slate-400">
                   {JSON.stringify(attempt.submission.content.classes, null, 2)}
                 </pre>
@@ -299,7 +326,7 @@ export default function FeedbackPage() {
 
               {attempt.submission.content.interfaces.length > 0 && (
                 <div>
-                  <span className="text-purple-400 font-bold block mb-1">// Interfaces:</span>
+                  <span className="text-purple-400 font-bold block mb-1">{"// Interfaces:"}</span>
                   <pre className="text-[11px] whitespace-pre-wrap text-slate-400">
                     {JSON.stringify(attempt.submission.content.interfaces, null, 2)}
                   </pre>
@@ -307,7 +334,7 @@ export default function FeedbackPage() {
               )}
 
               <div>
-                <span className="text-emerald-400 font-bold block mb-1">// Explanation:</span>
+                <span className="text-emerald-400 font-bold block mb-1">{"// Explanation:"}</span>
                 <p className="text-slate-300 whitespace-pre-wrap">
                   {attempt.submission.content.explanation}
                 </p>

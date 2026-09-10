@@ -197,6 +197,27 @@ export default function PracticeWorkspacePage() {
     }
   };
 
+  const handleRetryEvaluation = async () => {
+    setEvaluating(true);
+    try {
+      const evalRes = await fetch(`/api/attempts/${attemptId}/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const evalJson = await evalRes.json();
+      if (evalJson.success) {
+        router.push(`/attempts/${attemptId}/feedback`);
+      } else {
+        alert(evalJson.error || "Evaluation failed. Your design remains saved.");
+        setEvaluating(false);
+        await fetchAttemptData();
+      }
+    } catch (err: any) {
+      alert("Evaluation retry failed: " + err.message);
+      setEvaluating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-20 text-center space-y-3">
@@ -275,6 +296,18 @@ export default function PracticeWorkspacePage() {
             </>
           )}
 
+          {attempt.status === "FAILED" && (
+            <button
+              type="button"
+              onClick={handleRetryEvaluation}
+              disabled={evaluating}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-500/20 transition-all"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${evaluating ? "animate-spin" : ""}`} />
+              {evaluating ? "Evaluating..." : "Retry Evaluation"}
+            </button>
+          )}
+
           {attempt.status === "COMPLETED" && (
             <Link
               href={`/attempts/${attempt.id}/feedback`}
@@ -297,6 +330,29 @@ export default function PracticeWorkspacePage() {
               Evaluating your design against the 8-dimension rubric. Please wait a few seconds...
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Failed Evaluation Banner */}
+      {attempt.status === "FAILED" && !evaluating && (
+        <div className="p-5 rounded-xl border border-rose-800/80 bg-rose-950/30 text-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+              <h3 className="text-sm font-semibold text-white">Evaluation Encountered an Error</h3>
+            </div>
+            <p className="text-xs text-rose-300/90 pl-7">
+              {attempt.errorMessage || "Evaluation did not complete. Your submitted design is safely preserved."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetryEvaluation}
+            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shrink-0 transition-all shadow-md shadow-rose-600/20"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+            Retry Evaluation Now
+          </button>
         </div>
       )}
 
@@ -458,6 +514,18 @@ export default function PracticeWorkspacePage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {attempt.status === "FAILED" && (
+            <button
+              type="button"
+              onClick={handleRetryEvaluation}
+              disabled={evaluating}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-500/20 transition-all"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${evaluating ? "animate-spin" : ""}`} />
+              {evaluating ? "Re-running Evaluation..." : "Retry Evaluation"}
+            </button>
+          )}
+
           {!isReadOnly && (
             <button
               type="button"

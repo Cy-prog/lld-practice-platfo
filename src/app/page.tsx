@@ -308,7 +308,7 @@ export default function DashboardPage() {
               The LLD Practice Philosophy
             </h4>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Design is an iterative process. Avoid looking for a single "correct answer". Focus on justifying your trade-offs, decoupling state, and protecting domain boundaries.
+              Design is an iterative process. Avoid looking for a single &quot;correct answer&quot;. Focus on justifying your trade-offs, decoupling state, and protecting domain boundaries.
             </p>
           </div>
         </div>
